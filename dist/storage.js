@@ -96,7 +96,8 @@ PgStorage.SQL = `
             tid serial primary key,
             uri text not null,
             attrs json,
-            data bytea
+            data bytea,
+            create_time timestamp not null default now()
         );
     `;
 exports.PgStorage = PgStorage;
