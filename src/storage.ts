@@ -58,10 +58,14 @@ export class PgStorage implements Storage {
         }
     }
 
-    public async save(uri: string, data: any, options: any): Promise<any> {
+    public async save(uri: string, tags: string[], data: any, options: any): Promise<any> {
         let buf = await gzipCompress(data, this.options.compress);
         let client = await this.pool.connect();
         try {
+            if (!options) {
+                options = {};
+            }
+            options.tags = tags;
             let result = await client.query("insert into crawler_page(uri,attrs,data) values ($1, $2, $3) returning tid", [uri, options, buf]);
             this.Log.info("saving page data on %s is success by tid:%s", uri, result.rows[0].tid);
         } finally {

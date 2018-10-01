@@ -9,7 +9,7 @@ export declare class PgStorage implements Storage {
     pool: pg.Pool;
     options: any;
     bootstrap(options: any): Promise<any>;
-    save(uri: string, data: any, options: any): Promise<any>;
+    save(uri: string, tags: string[], data: any, options: any): Promise<any>;
     exist(...uris: string[]): Promise<number>;
     release(): Promise<any>;
 }

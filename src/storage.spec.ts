@@ -44,7 +44,7 @@ describe('Storage', async () => {
         let uris = [];
         for (let i = 0; i < 100; i++) {
             let uri = "http://www.baidu.com/" + i;
-            await storage.save(uri, "testing" + i, { a: i, b: i % 3 });
+            await storage.save(uri, ["t0"], "testing" + i, { a: i, b: i % 3 });
             uris.push(uri);
         }
         let found = await storage.exist(...uris)

@@ -60,11 +60,15 @@ class PgStorage {
             }
         });
     }
-    save(uri, data, options) {
+    save(uri, tags, data, options) {
         return __awaiter(this, void 0, void 0, function* () {
             let buf = yield gzipCompress(data, this.options.compress);
             let client = yield this.pool.connect();
             try {
+                if (!options) {
+                    options = {};
+                }
+                options.tags = tags;
                 let result = yield client.query("insert into crawler_page(uri,attrs,data) values ($1, $2, $3) returning tid", [uri, options, buf]);
                 this.Log.info("saving page data on %s is success by tid:%s", uri, result.rows[0].tid);
             }

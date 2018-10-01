@@ -4,6 +4,7 @@
   "description": "crawler storage by postgresql",
   "scripts": {
     "build": "tsc --declaration",
+    "torunner": "tsc --declaration && ./to-runner.sh",
     "watch": "tsc -w",
     "lint": "tslint -c tslint.json -p tsconfig.json",
     "test": "call(){ mocha -r ts-node/register --timeout 30000  \"src/**/*$1.spec.ts\" ; }; call",
