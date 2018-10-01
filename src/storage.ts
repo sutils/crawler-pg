@@ -1,7 +1,7 @@
 
 import { Storage } from "crawler";
 import * as pg from "pg";
-import { Gzip, createGzip } from "zlib";
+import { createGzip } from "zlib";
 import * as log4js from "log4js";
 
 export function gzipCompress(data: any, options?: any): Promise<Buffer> {
@@ -28,7 +28,8 @@ export class PgStorage implements Storage {
             tid serial primary key,
             uri text not null,
             attrs json,
-            data bytea
+            data bytea,
+            create_time timestamp not null default now()
         );
     `
     Log = log4js.getLogger("PgStorage");
