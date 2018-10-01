@@ -1,0 +1,8 @@
+{
+    "name": "crawler-pg",
+    "ambient": true,
+    "files": [
+        "src/crawler.ts"
+    ],
+    "homepage": "https://w.dyang.org/ums/uhf.git"
+}
