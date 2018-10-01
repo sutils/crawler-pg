@@ -55,7 +55,7 @@
     "@types/log4js": "^2.3.5",
     "@types/node": "^10.11.3",
     "@types/pg": "^7.4.10",
-    "crawler": "file:../crawler",
+    "crawler": "git+https://github.com/sutils/crawler.git",
     "log4js": "^3.0.5",
     "pg": "^7.4.3",
     "typescript": "^2.9.2"
