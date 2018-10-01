@@ -1,5 +1,5 @@
 
-import { DataStorage } from "crawler";
+import { Storage } from "crawler";
 import * as pg from "pg";
 import { Gzip, createGzip } from "zlib";
 import * as log4js from "log4js";
@@ -22,7 +22,7 @@ export function gzipCompress(data: any, options?: any): Promise<Buffer> {
     });
 }
 
-export class PgStorage implements DataStorage {
+export class PgStorage implements Storage {
     static SQL = `
         create table crawler_page (
             tid serial primary key,
