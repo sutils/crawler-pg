@@ -71,11 +71,12 @@ class PgStorage {
             let buf = yield gzipCompress(data, this.options.compress);
             let client = yield this.pool.connect();
             try {
-                if (!options) {
-                    options = {};
-                }
+                let create_time = options.create_time;
+                let atrrs = {};
+                Object.assign(atrrs, options);
                 options.tags = tags;
-                let result = yield client.query("insert into crawler_page(uri,attrs,data,status) values ($1, $2, $3, $4) returning tid", [uri, options, buf, this.options.status]);
+                delete options.create_time;
+                let result = yield client.query("insert into crawler_page(uri,attrs,data,create_time,status) values ($1, $2, $3, $4, $5) returning tid", [uri, options, buf, create_time, this.options.status]);
                 this.Log.info("saving page data on %s is success by tid:%s", uri, result.rows[0].tid);
             }
             finally {
@@ -107,7 +108,8 @@ PgStorage.INIT_SQL = `
             uri text not null,
             attrs json,
             data bytea,
-            create_time timestamp not null default now(),
+            create_time numeric,
+            time timestamp not null default now(),
             status text not null
         );
     `;
