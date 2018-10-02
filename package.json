@@ -5,6 +5,7 @@
   "scripts": {
     "build": "tsc --declaration",
     "torunner": "tsc --declaration && ./to-runner.sh",
+    "sync-crawler": "tsc --declaration && ./sync-crawler.sh",
     "watch": "tsc -w",
     "lint": "tslint -c tslint.json -p tsconfig.json",
     "test": "call(){ mocha -r ts-node/register --timeout 30000  \"src/**/*$1.spec.ts\" ; }; call",

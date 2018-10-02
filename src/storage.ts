@@ -73,11 +73,11 @@ export class PgStorage implements Storage {
         }
     }
 
-    public async exist(...uris: string[]): Promise<number> {
+    public async find(fields: string, ...uris: string[]): Promise<any[]> {
         let client = await this.pool.connect();
         try {
-            let result = await client.query("select count(*)::int as found from crawler_page where uri = any($1::text[])", [uris]);
-            return result.rows[0].found;
+            let result = await client.query("select " + fields + " from crawler_page where uri = any($1::text[])", [uris]);
+            return result.rows;
         } finally {
             client.release();
         }

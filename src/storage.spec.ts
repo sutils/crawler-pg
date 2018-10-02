@@ -47,8 +47,8 @@ describe('Storage', async () => {
             await storage.save(uri, ["t0"], "testing" + i, { a: i, b: i % 3 });
             uris.push(uri);
         }
-        let found = await storage.exist(...uris)
+        let rows = await storage.find("count(*)::int as found", ...uris)
         await storage.release();
-        assert.equal(found, 100);
+        assert.equal(rows[0].found, 100);
     })
 });

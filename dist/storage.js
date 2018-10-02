@@ -77,12 +77,12 @@ class PgStorage {
             }
         });
     }
-    exist(...uris) {
+    find(fields, ...uris) {
         return __awaiter(this, void 0, void 0, function* () {
             let client = yield this.pool.connect();
             try {
-                let result = yield client.query("select count(*)::int as found from crawler_page where uri = any($1::text[])", [uris]);
-                return result.rows[0].found;
+                let result = yield client.query("select " + fields + " from crawler_page where uri = any($1::text[])", [uris]);
+                return result.rows;
             }
             finally {
                 client.release();
