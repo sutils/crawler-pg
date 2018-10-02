@@ -4,7 +4,7 @@ import * as pg from "pg";
 import * as log4js from "log4js";
 export declare function gzipCompress(data: any, options?: any): Promise<Buffer>;
 export declare class PgStorage implements Storage {
-    static SQL: string;
+    static INIT_SQL: string;
     Log: log4js.Logger;
     pool: pg.Pool;
     options: any;

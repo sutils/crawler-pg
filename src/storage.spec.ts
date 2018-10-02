@@ -15,6 +15,8 @@ describe('Storage', async () => {
         // replaceConsole:true
     });
     let options = {
+        init: PgStorage.INIT_SQL,
+        status: "new",
         database: {
             connectionString: 'postgresql://cny:123@loc.m:5432/cny',
         },

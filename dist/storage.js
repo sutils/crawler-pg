@@ -47,7 +47,7 @@ class PgStorage {
             catch (e) {
                 if (e.message.indexOf("crawler_page") >= 0) {
                     this.Log.info("the crawler_page table is not exitus, will try create it");
-                    yield client.query(PgStorage.SQL);
+                    yield client.query(options.init);
                     this.Log.info("create crawler_page table success");
                 }
                 else {
@@ -69,7 +69,7 @@ class PgStorage {
                     options = {};
                 }
                 options.tags = tags;
-                let result = yield client.query("insert into crawler_page(uri,attrs,data) values ($1, $2, $3) returning tid", [uri, options, buf]);
+                let result = yield client.query("insert into crawler_page(uri,attrs,data,status) values ($1, $2, $3, $4) returning tid", [uri, options, buf, this.options.status]);
                 this.Log.info("saving page data on %s is success by tid:%s", uri, result.rows[0].tid);
             }
             finally {
@@ -95,13 +95,14 @@ class PgStorage {
         });
     }
 }
-PgStorage.SQL = `
+PgStorage.INIT_SQL = `
         create table crawler_page (
             tid serial primary key,
             uri text not null,
             attrs json,
             data bytea,
-            create_time timestamp not null default now()
+            create_time timestamp not null default now(),
+            status text not null
         );
     `;
 exports.PgStorage = PgStorage;
