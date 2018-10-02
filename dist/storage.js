@@ -37,6 +37,12 @@ class PgStorage {
     bootstrap(options) {
         return __awaiter(this, void 0, void 0, function* () {
             this.options = options;
+            if (!this.options.init) {
+                this.options.init = PgStorage.INIT_SQL;
+            }
+            if (!this.options.status || !options.database) {
+                throw "the status/database configure is required";
+            }
             this.pool = new pg.Pool(options.database);
             let client = yield this.pool.connect();
             try {

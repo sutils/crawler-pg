@@ -39,6 +39,12 @@ export class PgStorage implements Storage {
 
     public async bootstrap(options: any): Promise<any> {
         this.options = options;
+        if (!this.options.init) {
+            this.options.init = PgStorage.INIT_SQL;
+        }
+        if (!this.options.status || !options.database) {
+            throw "the status/database configure is required";
+        }
         this.pool = new pg.Pool(options.database);
         let client = await this.pool.connect();
         try {
