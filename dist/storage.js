@@ -11,6 +11,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const pg = require("pg");
 const zlib_1 = require("zlib");
 const log4js = require("log4js");
+const pg_large_object_1 = require("pg-large-object");
 function gzipCompress(data, options) {
     return new Promise((resolve, reject) => {
         let all = [];
@@ -71,13 +72,48 @@ class PgStorage {
             let buf = yield gzipCompress(data, this.options.compress);
             let client = yield this.pool.connect();
             try {
-                let create_time = options.create_time;
-                let atrrs = {};
-                Object.assign(atrrs, options);
-                options.tags = tags;
-                delete options.create_time;
-                let result = yield client.query("insert into crawler_page(uri,attrs,data,create_time,status) values ($1, $2, $3, $4, $5) returning tid", [uri, options, buf, create_time, this.options.status]);
-                this.Log.info("saving page data on %s is success by tid:%s", uri, result.rows[0].tid);
+                yield client.query("begin");
+                let done = false;
+                let tid;
+                let did;
+                try {
+                    let lom = new pg_large_object_1.LargeObjectManager({ pg: client });
+                    let stream = yield lom.createAndWritableStreamAsync(10240);
+                    let create_time = options.create_time;
+                    let atrrs = {};
+                    Object.assign(atrrs, options);
+                    options.tags = tags;
+                    delete options.create_time;
+                    let result = yield client.query("insert into crawler_page(uri,attrs,data,create_time,status) values ($1, $2, $3, $4, $5) returning tid", [uri, options, stream[0], create_time, this.options.status]);
+                    yield new Promise((resolve, reject) => {
+                        stream[1].on("finish", () => {
+                            resolve();
+                        });
+                        stream[1].on("error", (err) => {
+                            reject(err);
+                        });
+                        stream[1].write(buf, (err) => {
+                            if (err) {
+                                reject(err);
+                            }
+                            stream[1].end(() => {
+                                resolve();
+                            });
+                        });
+                    });
+                    done = true;
+                    did = stream[0];
+                    tid = result.rows[0].tid;
+                }
+                finally {
+                    if (done) {
+                        yield client.query("commit");
+                        this.Log.info("saving page data on %s is success by tid:%s,data:%s", uri, tid, did);
+                    }
+                    else {
+                        yield client.query("rollback");
+                    }
+                }
             }
             finally {
                 client.release();
@@ -106,8 +142,8 @@ PgStorage.INIT_SQL = `
         create table crawler_page (
             tid serial primary key,
             uri text not null,
+            data numeric not null,
             attrs json,
-            data bytea,
             create_time numeric,
             time timestamp not null default now(),
             status text not null

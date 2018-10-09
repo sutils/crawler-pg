@@ -3,6 +3,7 @@ import { Storage } from "crawler";
 import * as pg from "pg";
 import { createGzip } from "zlib";
 import * as log4js from "log4js";
+import { LargeObjectManager } from 'pg-large-object';
 
 export function gzipCompress(data: any, options?: any): Promise<Buffer> {
     return new Promise<Buffer>((resolve, reject) => {
@@ -27,8 +28,8 @@ export class PgStorage implements Storage {
         create table crawler_page (
             tid serial primary key,
             uri text not null,
+            data numeric not null,
             attrs json,
-            data bytea,
             create_time numeric,
             time timestamp not null default now(),
             status text not null
@@ -70,14 +71,47 @@ export class PgStorage implements Storage {
         let buf = await gzipCompress(data, this.options.compress);
         let client = await this.pool.connect();
         try {
-            let create_time = options.create_time;
-            let atrrs: any = {}
-            Object.assign(atrrs, options)
-            options.tags = tags;
-            delete options.create_time;
-            let result = await client.query("insert into crawler_page(uri,attrs,data,create_time,status) values ($1, $2, $3, $4, $5) returning tid",
-                [uri, options, buf, create_time, this.options.status]);
-            this.Log.info("saving page data on %s is success by tid:%s", uri, result.rows[0].tid);
+            await client.query("begin");
+            let done = false;
+            let tid: any;
+            let did: any;
+            try {
+                let lom = new LargeObjectManager({ pg: client });
+                let stream = await lom.createAndWritableStreamAsync(10240);
+                let create_time = options.create_time;
+                let atrrs: any = {}
+                Object.assign(atrrs, options)
+                options.tags = tags;
+                delete options.create_time;
+                let result = await client.query("insert into crawler_page(uri,attrs,data,create_time,status) values ($1, $2, $3, $4, $5) returning tid",
+                    [uri, options, stream[0], create_time, this.options.status]);
+                await new Promise((resolve, reject) => {
+                    stream[1].on("finish", () => {
+                        resolve();
+                    });
+                    stream[1].on("error", (err: Error) => {
+                        reject(err);
+                    })
+                    stream[1].write(buf, (err: Error) => {
+                        if (err) {
+                            reject(err);
+                        }
+                        stream[1].end(() => {
+                            resolve();
+                        });
+                    });
+                });
+                done = true;
+                did = stream[0];
+                tid = result.rows[0].tid;
+            } finally {
+                if (done) {
+                    await client.query("commit");
+                    this.Log.info("saving page data on %s is success by tid:%s,data:%s", uri, tid, did);
+                } else {
+                    await client.query("rollback");
+                }
+            }
         } finally {
             client.release();
         }
